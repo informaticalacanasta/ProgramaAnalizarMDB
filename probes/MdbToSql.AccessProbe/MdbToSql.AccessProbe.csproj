@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>MdbToSql.AccessProbe</AssemblyName>
+    <RootNamespace>MdbToSql.AccessProbe</RootNamespace>
+    <RuntimeIdentifier>win-x86</RuntimeIdentifier>
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+
+</Project>

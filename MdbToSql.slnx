@@ -5,6 +5,9 @@
     <Project Path="src/MdbToSql.Core/MdbToSql.Core.csproj" />
     <Project Path="src/MdbToSql.SqlServer/MdbToSql.SqlServer.csproj" />
   </Folder>
+  <Folder Name="/probes/">
+    <Project Path="probes/MdbToSql.AccessProbe/MdbToSql.AccessProbe.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/MdbToSql.Tests/MdbToSql.Tests.csproj" />
   </Folder>

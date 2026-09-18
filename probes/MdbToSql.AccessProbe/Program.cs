@@ -10,6 +10,8 @@ internal static class ProbeConstants
 {
     public const string AccessProgId = "Access.Application.11";
     public const string DaoProgId = "DAO.DBEngine.36";
+    public const int MsoAutomationSecurityLow = 1;
+    public const int MsoAutomationSecurityByUI = 2;
     public const int MsoAutomationSecurityForceDisable = 3;
     public const int AcForm = 2;
     public const int AcReport = 3;
@@ -114,11 +116,19 @@ internal static class Program
         @"C:\Users\Usuario\Desktop\LaCanasta\ORIGENMDB",
         "IMPORTAR.mdb");
 
-    [STAThread]
-    private static int Main(string[] args)
-    {
-        Console.OutputEncoding = Encoding.UTF8;
-        var mdbPath = args.Length > 0 ? args[0] : DefaultMdb;
+        [STAThread]
+        private static int Main(string[] args)
+        {
+            Console.OutputEncoding = Encoding.UTF8;
+            if (args.Length == 0
+                || string.Equals(args[0], "--phase1b", StringComparison.OrdinalIgnoreCase))
+            {
+                return Phase1B.Run();
+            }
+
+            var mdbPath = string.Equals(args[0], "--convert", StringComparison.OrdinalIgnoreCase)
+                ? args.Length > 1 ? args[1] : DefaultMdb
+                : args[0];
         var report = new ProbeReport { MdbPath = mdbPath };
         var runId = Guid.NewGuid().ToString("N");
         var tempDir = Path.Combine(Path.GetTempPath(), "MdbToSql", runId);

@@ -3,19 +3,57 @@ using System.Text;
 
 namespace MdbToSql.AccessProbe;
 
+internal sealed class DialogCapture
+{
+    public bool Detected { get; set; }
+    public string? Title { get; set; }
+}
+
 internal sealed class DialogGuard : IDisposable
 {
     private const int WmClose = 0x0010;
     private readonly int _accessPid;
-    private readonly ProbeReport _report;
+    private readonly Action<string> _onDetected;
     private readonly CancellationTokenSource _cts = new();
     private readonly Thread _thread;
     private bool _disposed;
+    private bool _signaled;
 
     public DialogGuard(int accessPid, ProbeReport report)
+        : this(accessPid, title =>
+        {
+            if (report.DialogDetected)
+            {
+                return;
+            }
+
+            report.DialogDetected = true;
+            report.DialogTitle = title;
+            report.Warnings.Add(
+                $"Diálogo modal detectado en Access: '{title}'. " +
+                "No se pulsa ningún botón; se envía WM_CLOSE para abortar.");
+        })
+    {
+    }
+
+    public DialogGuard(int accessPid, DialogCapture capture)
+        : this(accessPid, title =>
+        {
+            if (capture.Detected)
+            {
+                return;
+            }
+
+            capture.Detected = true;
+            capture.Title = title;
+        })
+    {
+    }
+
+    private DialogGuard(int accessPid, Action<string> onDetected)
     {
         _accessPid = accessPid;
-        _report = report;
+        _onDetected = onDetected;
         _thread = new Thread(Watch)
         {
             IsBackground = true,
@@ -24,7 +62,7 @@ internal sealed class DialogGuard : IDisposable
         _thread.Start();
     }
 
-    public bool Detected => _report.DialogDetected;
+    public bool Detected => _signaled;
 
     private void Watch()
     {
@@ -68,15 +106,13 @@ internal sealed class DialogGuard : IDisposable
             return true;
         }
 
-        if (!_report.DialogDetected)
+        var label = string.IsNullOrWhiteSpace(title)
+            ? $"(sin título, class={className})"
+            : title;
+        if (!_signaled)
         {
-            _report.DialogDetected = true;
-            _report.DialogTitle = string.IsNullOrWhiteSpace(title)
-                ? $"(sin título, class={className})"
-                : title;
-            _report.Warnings.Add(
-                $"Diálogo modal detectado en Access: '{_report.DialogTitle}'. " +
-                "No se pulsa ningún botón; se envía WM_CLOSE para abortar.");
+            _signaled = true;
+            _onDetected(label);
         }
 
         Native.PostMessage(hWnd, WmClose, IntPtr.Zero, IntPtr.Zero);

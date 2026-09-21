@@ -7,6 +7,7 @@ internal static class AccessConstants
     public const int AcQuitSaveNone = 2;
     public const int AcViewDesign = 1;
     public const int AcForm = 2;
+    public const int AcReport = 3;
     public const int AcSaveNo = 2;
     public const int AcHidden = 1;
     public const int AcDetail = 0;

@@ -124,6 +124,13 @@ internal static class Program
         {
             Console.OutputEncoding = Encoding.UTF8;
             if (args.Length > 0
+                && string.Equals(args[0], "--phase4a", StringComparison.OrdinalIgnoreCase))
+            {
+                var mdb = args.Length > 1 ? args[1] : DefaultMdb;
+                return Phase4A.Run(mdb);
+            }
+
+            if (args.Length > 0
                 && string.Equals(args[0], "--phase3", StringComparison.OrdinalIgnoreCase))
             {
                 var mdb = args.Length > 1 ? args[1] : DefaultMdb;

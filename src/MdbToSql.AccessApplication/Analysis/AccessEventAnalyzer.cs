@@ -51,6 +51,20 @@ internal sealed class AccessEventAnalyzer
         "OnFormat"
     ];
 
+    private static readonly string[] ReportEvents =
+    [
+        "OnOpen",
+        "OnClose",
+        "OnNoData",
+        "OnError"
+    ];
+
+    private static readonly string[] ReportSectionEvents =
+    [
+        "OnFormat",
+        "OnPrint"
+    ];
+
     private readonly ComPropertyReader _reader;
 
     public AccessEventAnalyzer(ComPropertyReader reader)
@@ -77,6 +91,19 @@ internal sealed class AccessEventAnalyzer
         List<string> warnings)
     {
         return Read(section, sectionName, AccessObjectKind.Section, SectionEvents, warnings);
+    }
+
+    public List<AccessEventBinding> ReadReportEvents(object report, string reportName, List<string> warnings)
+    {
+        return Read(report, reportName, AccessObjectKind.Report, ReportEvents, warnings);
+    }
+
+    public List<AccessEventBinding> ReadReportSectionEvents(
+        object section,
+        string sectionName,
+        List<string> warnings)
+    {
+        return Read(section, sectionName, AccessObjectKind.Section, ReportSectionEvents, warnings);
     }
 
     private List<AccessEventBinding> Read(

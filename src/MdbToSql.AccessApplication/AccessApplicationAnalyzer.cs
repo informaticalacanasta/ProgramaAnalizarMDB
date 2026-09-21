@@ -173,74 +173,32 @@ internal static class SafeAccessAnalysisSession
         CancellationToken cancellationToken)
     {
         AnalysisWorkspace.EnsureLocal(analysisSafePath, "analysis-safe.mdb");
-        using var lifetime = new ComLifetime();
-        object? app = null;
-        var opened = false;
-        AccessDialogGuard? dialogs = null;
-        try
+        using var runtime = SafeAccessRuntime.Open(analysisSafePath, beforePids);
+        var lifetime = runtime.Lifetime;
+        var app = runtime.App;
+        var dialogs = runtime.Dialogs;
+
+        var inventory = new AccessObjectInventory
         {
-            app = lifetime.Track(ComInterop.Create(AccessConstants.AccessProgId));
-            var pid = AccessProcessTracker.CurrentPids().Except(beforePids).FirstOrDefault();
-            var version = ComInterop.GetString(app, "Version");
-            var path = AccessProcessTracker.TryGetPath(pid == 0 ? null : pid);
-            if (!AccessProcessTracker.IsAccess2003(version, path))
-            {
-                throw new AccessApplicationAnalysisException(
-                    $"Se automatizó Access '{version}' en '{path}'. Se esperaba Access 2003 (11.0 / OFFICE11).");
-            }
+            LoadedForms = 0,
+            LoadedReports = 0
+        };
+        inventory.Forms.AddRange(ReadForms(lifetime, app, daoForms, warnings));
+        inventory.Reports.AddRange(ReadReports(lifetime, app, daoReports, warnings));
+        FillMacros(lifetime, app, daoMacros, inventory.Macros);
+        FillModules(lifetime, app, daoModules, inventory.Modules, warnings);
 
-            ComInterop.Set(app, "Visible", false);
-            ComInterop.Set(app, "AutomationSecurity", AccessConstants.AutomationSecurityLow);
-            dialogs = new AccessDialogGuard(pid);
-            using (var bypass = new StartupBypassGuard())
-            {
-                bypass.Press();
-                ComInterop.Call(app, "OpenCurrentDatabase", analysisSafePath, false);
-                opened = true;
-            }
-
-            dialogs.ThrowIfDetected();
-
-            var loadedForms = ReadOpenNames(lifetime, app, "Forms");
-            var loadedReports = ReadOpenNames(lifetime, app, "Reports");
-            if (loadedForms.Count > 0 || loadedReports.Count > 0)
-            {
-                throw new UnsafeAccessStartupException(loadedForms, loadedReports);
-            }
-
-            var inventory = new AccessObjectInventory
-            {
-                LoadedForms = 0,
-                LoadedReports = 0
-            };
-            inventory.Forms.AddRange(ReadForms(lifetime, app, daoForms, warnings));
-            inventory.Reports.AddRange(ReadReports(lifetime, app, daoReports, warnings));
-            FillMacros(lifetime, app, daoMacros, inventory.Macros);
-            FillModules(lifetime, app, daoModules, inventory.Modules, warnings);
-
-            var formAnalyzer = new AccessFormAnalyzer(
-                lifetime,
-                app!,
-                dialogs!,
-                tables,
-                queries,
-                inventory.Forms.Select(form => form.Name).ToList());
-            var detailedForms = formAnalyzer.Analyze(inventory.Forms, warnings, cancellationToken);
-            inventory.Forms.Clear();
-            inventory.Forms.AddRange(detailedForms);
-            return inventory;
-        }
-        finally
-        {
-            dialogs?.Dispose();
-            if (opened)
-            {
-                ComInterop.TryCall(app, "CloseCurrentDatabase");
-            }
-
-            ComInterop.TryCall(app, "Quit", AccessConstants.AcQuitSaveNone);
-            AccessProcessTracker.WaitUntilGone(beforePids);
-        }
+        var formAnalyzer = new AccessFormAnalyzer(
+            lifetime,
+            app,
+            dialogs,
+            tables,
+            queries,
+            inventory.Forms.Select(form => form.Name).ToList());
+        var detailedForms = formAnalyzer.Analyze(inventory.Forms, warnings, cancellationToken);
+        inventory.Forms.Clear();
+        inventory.Forms.AddRange(detailedForms);
+        return inventory;
     }
 
     private static List<string> ReadOpenNames(ComLifetime lifetime, object app, string collectionName)

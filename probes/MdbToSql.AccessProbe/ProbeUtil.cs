@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 
 namespace MdbToSql.AccessProbe;
 
@@ -162,6 +163,46 @@ internal static class ProbeUtil
         }
 
         return info;
+    }
+
+    public static string ComputeSha256(string path)
+    {
+        using var stream = new FileStream(
+            path,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.ReadWrite,
+            1024 * 1024,
+            FileOptions.SequentialScan);
+        return Convert.ToHexString(SHA256.HashData(stream));
+    }
+
+    public static void PrepareLocalWorkingCopy(string path)
+    {
+        File.SetAttributes(path, FileAttributes.Normal);
+        try
+        {
+            File.Delete(path + ":Zone.Identifier");
+        }
+        catch
+        {
+            // El ADS puede no existir.
+        }
+    }
+
+    public static bool IsSystemObjectName(string name)
+    {
+        return string.IsNullOrWhiteSpace(name)
+            || name.StartsWith("MSys", StringComparison.OrdinalIgnoreCase)
+            || name.StartsWith("~", StringComparison.Ordinal);
+    }
+
+    public static bool SamePath(string a, string b)
+    {
+        return string.Equals(
+            Path.GetFullPath(a).TrimEnd('\\'),
+            Path.GetFullPath(b).TrimEnd('\\'),
+            StringComparison.OrdinalIgnoreCase);
     }
 }
 

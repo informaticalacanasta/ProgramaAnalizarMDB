@@ -82,3 +82,45 @@ public sealed class TableNameCollisionException : MdbToSqlException
 
     public IReadOnlyList<string> MdbNames { get; }
 }
+
+public sealed class UnsafeAccessStartupException : MdbToSqlException
+{
+    public UnsafeAccessStartupException(string message)
+        : base(message)
+    {
+    }
+
+    public UnsafeAccessStartupException(
+        IReadOnlyList<string> loadedForms,
+        IReadOnlyList<string> loadedReports)
+        : base(
+            "La copia de análisis abrió objetos de arranque. Análisis abortado." +
+            Environment.NewLine +
+            $"  Forms cargados: {(loadedForms.Count == 0 ? "(ninguno)" : string.Join(", ", loadedForms))}" +
+            Environment.NewLine +
+            $"  Reports cargados: {(loadedReports.Count == 0 ? "(ninguno)" : string.Join(", ", loadedReports))}")
+    {
+        LoadedForms = loadedForms;
+        LoadedReports = loadedReports;
+    }
+
+    public IReadOnlyList<string> LoadedForms { get; } = [];
+
+    public IReadOnlyList<string> LoadedReports { get; } = [];
+}
+
+public sealed class AccessApplicationAnalysisException : MdbToSqlException
+{
+    public AccessApplicationAnalysisException(string message, Exception? inner = null)
+        : base(message, inner)
+    {
+    }
+}
+
+public sealed class AccessSessionUnsafeException : MdbToSqlException
+{
+    public AccessSessionUnsafeException(string message, Exception? inner = null)
+        : base(message, inner)
+    {
+    }
+}

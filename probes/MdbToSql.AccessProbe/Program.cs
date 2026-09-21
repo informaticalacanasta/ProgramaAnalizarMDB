@@ -17,11 +17,14 @@ internal static class ProbeConstants
     public const int AcReport = 3;
     public const int AcModule = 5;
     public const int AcSaveNo = 2;
+    public const int AcSaveYes = 1;
     public const int AcQuitSaveNone = 2;
     public const int AcDesign = 1;
     public const int AcHidden = 1;
     public const int AcFileFormatAccess2000 = 9;
     public const int AcFileFormatAccess2002 = 10;
+    public const int DbBoolean = 1;
+    public const int DbText = 10;
     public const int DbAttachedTable = 1073741824;
     public const int DbAttachedOdbc = 536870912;
 }
@@ -120,6 +123,26 @@ internal static class Program
         private static int Main(string[] args)
         {
             Console.OutputEncoding = Encoding.UTF8;
+            if (args.Length > 0
+                && string.Equals(args[0], "--phase3", StringComparison.OrdinalIgnoreCase))
+            {
+                var mdb = args.Length > 1 ? args[1] : DefaultMdb;
+                return Phase3.Run(mdb);
+            }
+
+            if (args.Length > 0
+                && string.Equals(args[0], "--phase2", StringComparison.OrdinalIgnoreCase))
+            {
+                var mdb = args.Length > 1 ? args[1] : DefaultMdb;
+                return Phase2.Run(mdb);
+            }
+
+            if (args.Length > 0
+                && string.Equals(args[0], "--phase1c", StringComparison.OrdinalIgnoreCase))
+            {
+                return Phase1C.Run();
+            }
+
             if (args.Length == 0
                 || string.Equals(args[0], "--phase1b", StringComparison.OrdinalIgnoreCase))
             {

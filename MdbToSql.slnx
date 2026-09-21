@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/MdbToSql.Access/MdbToSql.Access.csproj" />
+    <Project Path="src/MdbToSql.AccessApplication/MdbToSql.AccessApplication.csproj" />
     <Project Path="src/MdbToSql.App/MdbToSql.App.csproj" />
     <Project Path="src/MdbToSql.Core/MdbToSql.Core.csproj" />
     <Project Path="src/MdbToSql.SqlServer/MdbToSql.SqlServer.csproj" />

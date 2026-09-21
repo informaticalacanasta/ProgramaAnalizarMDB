@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\MdbToSql.Access\MdbToSql.Access.csproj" />
+    <ProjectReference Include="..\..\src\MdbToSql.AccessApplication\MdbToSql.AccessApplication.csproj" />
     <ProjectReference Include="..\..\src\MdbToSql.Core\MdbToSql.Core.csproj" />
     <ProjectReference Include="..\..\src\MdbToSql.SqlServer\MdbToSql.SqlServer.csproj" />
   </ItemGroup>

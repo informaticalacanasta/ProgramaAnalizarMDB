@@ -61,6 +61,23 @@ internal static class ComInterop
             args);
     }
 
+    public static object? GetWithArgs(object target, string property, params object[] args)
+    {
+        try
+        {
+            return target.GetType().InvokeMember(
+                property,
+                BindingFlags.GetProperty,
+                binder: null,
+                target,
+                args);
+        }
+        catch (Exception)
+        {
+            return Call(target, property, args);
+        }
+    }
+
     public static object GetIndexed(object target, string property, object index)
     {
         try

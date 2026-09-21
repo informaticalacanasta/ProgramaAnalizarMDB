@@ -124,6 +124,34 @@ internal static class Program
         {
             Console.OutputEncoding = Encoding.UTF8;
             if (args.Length > 0
+                && string.Equals(args[0], "--ventas-functional", StringComparison.OrdinalIgnoreCase))
+            {
+                var mdb = args.Length > 1 ? args[1] : DefaultMdb;
+                return PhaseVentasFunctional.Run(mdb);
+            }
+
+            if (args.Length > 0
+                && string.Equals(args[0], "--ventas", StringComparison.OrdinalIgnoreCase))
+            {
+                var mdb = args.Length > 1 ? args[1] : DefaultMdb;
+                return PhaseVentas.Run(mdb);
+            }
+
+            if (args.Length > 0
+                && string.Equals(args[0], "--terminal-vba", StringComparison.OrdinalIgnoreCase))
+            {
+                var mdb = args.Length > 1 ? args[1] : DefaultMdb;
+                return PhaseTerminalVba.Run(mdb);
+            }
+
+            if (args.Length > 0
+                && string.Equals(args[0], "--menu-vba", StringComparison.OrdinalIgnoreCase))
+            {
+                var mdb = args.Length > 1 ? args[1] : DefaultMdb;
+                return PhaseMenuVba.Run(mdb);
+            }
+
+            if (args.Length > 0
                 && string.Equals(args[0], "--phase4a", StringComparison.OrdinalIgnoreCase))
             {
                 var mdb = args.Length > 1 ? args[1] : DefaultMdb;

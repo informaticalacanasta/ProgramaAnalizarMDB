@@ -64,6 +64,9 @@ $RECYCLE.BIN/
 *.swp
 *~
 
+## Reverse-engineering dumps (may contain VBA/private paths)
+results/
+
 ## Local / secrets
 appsettings.*.json
 !appsettings.json

@@ -52,6 +52,11 @@ internal sealed class AccessFormAnalyzer
         _doCmd = lifetime.Track(ComInterop.Get(app, "DoCmd"));
     }
 
+    public AccessFormAnalysis ReadOpened(object form, string name, List<string> warnings)
+    {
+        return ReadOpenedForm(form, name, stub: null, warnings);
+    }
+
     public IReadOnlyList<AccessFormAnalysis> Analyze(
         IReadOnlyList<AccessFormAnalysis> inventory,
         List<string> sessionWarnings,

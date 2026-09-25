@@ -124,6 +124,15 @@ internal static class Program
         {
             Console.OutputEncoding = Encoding.UTF8;
             if (args.Length > 0
+                && string.Equals(args[0], "--recepcion-contract", StringComparison.OrdinalIgnoreCase))
+            {
+                var folder = args.Length > 1
+                    ? args[1]
+                    : Path.Combine(@"C:\Users\Usuario\Desktop\LaCanasta\ORIGENMDB");
+                return PhaseRecepcionContract.Run(folder);
+            }
+
+            if (args.Length > 0
                 && string.Equals(args[0], "--ventas-functional", StringComparison.OrdinalIgnoreCase))
             {
                 var mdb = args.Length > 1 ? args[1] : DefaultMdb;

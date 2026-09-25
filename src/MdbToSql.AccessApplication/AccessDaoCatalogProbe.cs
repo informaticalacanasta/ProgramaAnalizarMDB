@@ -25,12 +25,14 @@ public sealed class AccessDaoCatalogProbe
         var beforePids = AccessProcessTracker.CurrentPids();
         IReadOnlyList<AccessQueryAnalysis> queries = [];
         IReadOnlyList<AccessTableReference> tables = [];
+        IReadOnlyList<AccessLocalTableSchema> localSchemas = [];
         AnalysisWorkspace? workspace = null;
         try
         {
             workspace = AnalysisWorkspace.CreateFrom(mdbPath);
             using var dao = DaoSession.OpenReadOnly(workspace.SourceCopyPath);
             tables = dao.ReadTables(warnings);
+            localSchemas = dao.ReadLocalTableSchemas(tables, warnings);
             queries = dao.ReadQueries(warnings);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
@@ -58,6 +60,7 @@ public sealed class AccessDaoCatalogProbe
         return new AccessDaoCatalogResult(
             queries,
             tables,
+            localSchemas,
             before,
             after,
             verified,
@@ -71,6 +74,7 @@ public sealed class AccessDaoCatalogProbe
 public sealed record AccessDaoCatalogResult(
     IReadOnlyList<AccessQueryAnalysis> Queries,
     IReadOnlyList<AccessTableReference> Tables,
+    IReadOnlyList<AccessLocalTableSchema> LocalSchemas,
     FileIntegritySnapshot OriginalBefore,
     FileIntegritySnapshot OriginalAfter,
     bool OriginalIntegrityVerified,

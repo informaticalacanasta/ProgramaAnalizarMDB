@@ -120,6 +120,165 @@ internal sealed class DaoSession : IDisposable
         return tables;
     }
 
+    public IReadOnlyList<AccessLocalTableSchema> ReadLocalTableSchemas(
+        IReadOnlyList<AccessTableReference> tables,
+        List<string> warnings)
+    {
+        var schemas = new List<AccessLocalTableSchema>();
+        object tableDefs;
+        try
+        {
+            tableDefs = _lifetime.Track(ComInterop.Get(_database, "TableDefs"));
+        }
+        catch (Exception exception)
+        {
+            warnings.Add("TableDefs no enumerables para esquema local: " + exception.Message);
+            return schemas;
+        }
+
+        foreach (var table in tables)
+        {
+            if (table.IsLinked)
+            {
+                continue;
+            }
+
+            try
+            {
+                var tableDef = _lifetime.Track(ComInterop.Item(tableDefs, table.Name));
+                schemas.Add(new AccessLocalTableSchema(
+                    table.Name,
+                    ReadTableFields(tableDef, table.Name, warnings),
+                    ReadTableIndexes(tableDef, table.Name, warnings)));
+            }
+            catch (Exception exception)
+            {
+                warnings.Add($"Tabla local '{table.Name}': no se leyeron Fields/Indexes ({exception.Message}).");
+            }
+        }
+
+        return schemas;
+    }
+
+    private IReadOnlyList<AccessLocalFieldSchema> ReadTableFields(object tableDef, string tableName, List<string> warnings)
+    {
+        var fields = new List<AccessLocalFieldSchema>();
+        object collection;
+        int count;
+        try
+        {
+            collection = _lifetime.Track(ComInterop.Get(tableDef, "Fields"));
+            count = ComInterop.Count(collection);
+        }
+        catch (Exception exception)
+        {
+            warnings.Add($"Tabla '{tableName}' Fields: {exception.Message}");
+            return fields;
+        }
+
+        for (var index = 0; index < count; index++)
+        {
+            try
+            {
+                var field = _lifetime.Track(ComInterop.Item(collection, index));
+                var typeObject = ComInterop.TryGet(field, "Type");
+                int? type = typeObject is null
+                    ? null
+                    : Convert.ToInt32(typeObject, CultureInfo.InvariantCulture);
+                var sizeObject = ComInterop.TryGet(field, "Size");
+                int? size = sizeObject is null
+                    ? null
+                    : Convert.ToInt32(sizeObject, CultureInfo.InvariantCulture);
+                var requiredObject = ComInterop.TryGet(field, "Required");
+                var required = requiredObject is null
+                    ? (bool?)null
+                    : Convert.ToBoolean(requiredObject, CultureInfo.InvariantCulture);
+                var attributesObject = ComInterop.TryGet(field, "Attributes");
+                var attributes = attributesObject is null
+                    ? 0
+                    : Convert.ToInt32(attributesObject, CultureInfo.InvariantCulture);
+                fields.Add(new AccessLocalFieldSchema(
+                    ComInterop.GetString(field, "Name") ?? $"[{index}]",
+                    index,
+                    type,
+                    AccessDaoTypeNames.Name(type),
+                    size,
+                    required,
+                    (attributes & 16) != 0));
+            }
+            catch (Exception exception)
+            {
+                warnings.Add($"Tabla '{tableName}' Field[{index}]: {exception.Message}");
+            }
+        }
+
+        return fields;
+    }
+
+    private IReadOnlyList<AccessLocalIndexSchema> ReadTableIndexes(object tableDef, string tableName, List<string> warnings)
+    {
+        var indexes = new List<AccessLocalIndexSchema>();
+        object collection;
+        int count;
+        try
+        {
+            collection = _lifetime.Track(ComInterop.Get(tableDef, "Indexes"));
+            count = ComInterop.Count(collection);
+        }
+        catch (Exception exception)
+        {
+            warnings.Add($"Tabla '{tableName}' Indexes: {exception.Message}");
+            return indexes;
+        }
+
+        for (var index = 0; index < count; index++)
+        {
+            try
+            {
+                var item = _lifetime.Track(ComInterop.Item(collection, index));
+                var name = ComInterop.GetString(item, "Name") ?? $"[{index}]";
+                var uniqueObject = ComInterop.TryGet(item, "Unique");
+                var unique = uniqueObject is not null
+                    && Convert.ToBoolean(uniqueObject, CultureInfo.InvariantCulture);
+                var primaryObject = ComInterop.TryGet(item, "Primary");
+                var primary = primaryObject is not null
+                    && Convert.ToBoolean(primaryObject, CultureInfo.InvariantCulture);
+                indexes.Add(new AccessLocalIndexSchema(
+                    name,
+                    unique,
+                    primary,
+                    ReadIndexFieldNames(item)));
+            }
+            catch (Exception exception)
+            {
+                warnings.Add($"Tabla '{tableName}' Index[{index}]: {exception.Message}");
+            }
+        }
+
+        return indexes;
+    }
+
+    private IReadOnlyList<string> ReadIndexFieldNames(object index)
+    {
+        var names = new List<string>();
+        try
+        {
+            var fields = _lifetime.Track(ComInterop.Get(index, "Fields"));
+            var count = ComInterop.Count(fields);
+            for (var fieldIndex = 0; fieldIndex < count; fieldIndex++)
+            {
+                var field = _lifetime.Track(ComInterop.Item(fields, fieldIndex));
+                names.Add(ComInterop.GetString(field, "Name") ?? $"[{fieldIndex}]");
+            }
+        }
+        catch
+        {
+            return names;
+        }
+
+        return names;
+    }
+
     public IReadOnlyList<AccessQueryAnalysis> ReadQueries(List<string> warnings)
     {
         var queries = new List<AccessQueryAnalysis>();
